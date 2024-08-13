@@ -7,7 +7,6 @@ spring:
 #    url: jdbc:mysql://mysql_test:3306/ecommerce
     username: root
     password: test123
-
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
@@ -18,6 +17,16 @@ spring:
         use_new_id_generator_mappings: true
         format_sql: true
         show_sql: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: kafka-group-1
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 jwt:
   secret: your_strong_secret_key_which_is_32_bytes_long
