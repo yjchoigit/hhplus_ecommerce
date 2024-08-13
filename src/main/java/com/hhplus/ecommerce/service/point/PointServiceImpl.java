@@ -139,4 +139,13 @@ public class PointServiceImpl implements PointService {
         }
         return pointHistoryList;
     }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public void revertPointUsage(Long buyerId, int point) {
+        // 사용한 잔액 다시 돌려주기
+        Point pointInfo = pointRepository.findByBuyerId(buyerId)
+                .orElseThrow(() -> new PointCustomException(PointEnums.Error.NO_POINT));
+        pointInfo.charge(point);
+    }
 }

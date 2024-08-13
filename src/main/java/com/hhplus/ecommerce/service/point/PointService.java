@@ -17,4 +17,7 @@ public interface PointService {
     
     // 잔액 내역 조회
     List<PointHistory> findPointHistoryList(Long buyerId);
+
+    // 사용한 잔액 다시 돌려주기
+    void revertPointUsage(Long buyerId, int point);
 }

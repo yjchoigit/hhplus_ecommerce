@@ -24,16 +24,17 @@ jwt:
   expiration: 3600000 # 만료 시간 (밀리초 단위)
 
 # JPA 및 H2 데이터베이스 로그 출력
-#logging:
-#  level:
-#    org:
-#      springframework:
-#        data: debug
-#      hibernate: debug
-#    com:
-#      zaxxer:
-#        hikari: debug
-#    h2: debug
+logging:
+  level:
+    org:
+      springframework:
+        transaction: info  # 트랜잭션 관련 로그 레벨을 info로 설정
+        data: info  # 데이터 관련 로그 레벨을 info로 설정
+      hibernate: info  # Hibernate 관련 로그 레벨을 info로 설정
+    com:
+      zaxxer:
+        hikari: info  # HikariCP 관련 로그 레벨을 info로 설정
+    h2: warn  # H2 데이터베이스 관련 로그 레벨을 warn으로 설정 (오류만 출력)
 
 springdoc:
   packages-to-scan: com.hhplus.ecommerce.controller

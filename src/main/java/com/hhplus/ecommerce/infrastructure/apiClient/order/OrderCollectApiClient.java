@@ -15,7 +15,6 @@ public class OrderCollectApiClient {
     }
 
     public void sendOrderToCollectionPlatform(SendOrderToCollectionDto dto) {
-        log.info("주문 데이터 수집 >> 외부 데이터 플랫폼 전달");
         String url = "https://httpbin.org/post";
         restTemplate.postForObject(url, dto, SendOrderToCollectionDto.class);
     }

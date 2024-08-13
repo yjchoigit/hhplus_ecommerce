@@ -48,7 +48,12 @@ public class Payment extends CreateModifyDateTimeEntity {
         this.paymentPrice = paymentPrice;
         this.status = status;
     }
-    
+
+    // 결제 대기 상태로 변경
+    public void paymentWait(){
+        this.status = OrderEnums.PaymentStatus.WAIT;
+    }
+
     // 결제 완료 상태로 변경
     public void paymentComplete(){
         this.status = OrderEnums.PaymentStatus.PAY_COMPLETE;

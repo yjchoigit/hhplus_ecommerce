@@ -50,12 +50,9 @@ public class OrderController {
     @Operation(summary = "주문 결제 진행")
     @ApiResponse(responseCode = "200", description = "성공", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Long.class)))
     @PostMapping(value = "/orders/payment")
-    public ResponseDto<Long> paymentOrder(@RequestBody @Valid PaymentOrderApiReqDto reqDto){
-        Long orderPaymentId = orderPaymentFacade.pay(reqDto.buyerId(), reqDto.orderId());
-        if(orderPaymentId == null){
-            return ResponseUtil.failure();
-        }
-        return ResponseUtil.success(orderPaymentId);
+    public ResponseDto<Void> paymentOrder(@RequestBody @Valid PaymentOrderApiReqDto reqDto){
+        orderPaymentFacade.pay(reqDto.buyerId(), reqDto.orderId());
+        return ResponseUtil.success();
     }
 
     @Operation(summary = "주문 조회")

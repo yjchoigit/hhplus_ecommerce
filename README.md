@@ -178,7 +178,7 @@ sequenceDiagram
 
 ERD 명세
 ------
-![img_2.png](image/img_2.png)
+![img_2.png](docs/basic/image/img_2.png)
 
 API Specs
 ---------
@@ -187,7 +187,7 @@ API Specs
 
 API Swagger
 ---------
-[API Swagger 캡쳐본](image/img_3.png)
+[API Swagger 캡쳐본](docs/basic/image/img_3.png)
 
 think-about
 ---

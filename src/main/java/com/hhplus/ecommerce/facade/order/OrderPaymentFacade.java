@@ -4,9 +4,11 @@ import com.hhplus.ecommerce.base.config.redis.RedisCustomException;
 import com.hhplus.ecommerce.base.config.redis.RedisEnums;
 import com.hhplus.ecommerce.controller.order.dto.CreateOrderApiReqDto;
 import com.hhplus.ecommerce.domain.order.entity.Order;
+import com.hhplus.ecommerce.domain.order.event.OrderEventPublish;
+import com.hhplus.ecommerce.domain.order.event.dto.OrderPaymentCompleteEvent;
 import com.hhplus.ecommerce.domain.payment.entity.Payment;
-import com.hhplus.ecommerce.infrastructure.apiClient.order.OrderCollectApiClient;
-import com.hhplus.ecommerce.infrastructure.apiClient.order.dto.SendOrderToCollectionDto;
+import com.hhplus.ecommerce.domain.payment.event.PaymentEventPublish;
+import com.hhplus.ecommerce.saga.manager.PayTransactionSagaManager;
 import com.hhplus.ecommerce.service.payment.PaymentService;
 import com.hhplus.ecommerce.service.order.OrderService;
 import com.hhplus.ecommerce.service.order.OrderSheetService;
@@ -33,8 +35,10 @@ public class OrderPaymentFacade {
     private ProductService productService;
     private ProductStockService productStockService;
     private PaymentService orderPaymentService;
-    private OrderCollectApiClient orderCollectApiClient;
+    private OrderEventPublish orderEventPublish;
     private RedissonClient redissonClient;
+    private PaymentEventPublish paymentEventPublish;
+    private PayTransactionSagaManager payTransactionSagaManager;
 
     // 주문 생성
     public Long createOrder(CreateOrderApiReqDto reqDto){
@@ -116,7 +120,7 @@ public class OrderPaymentFacade {
 
 
     // 결제 처리
-    public Long pay(Long buyerId, Long orderId) {
+    public void pay(Long buyerId, Long orderId) {
         // 주문 id 기준으로 Lock 객체를 가져옴
         RLock rLock = redissonClient.getLock(RedisEnums.LockName.PAYMENT_ORDER.changeLockName(orderId));
         boolean isLocked = false;
@@ -135,7 +139,7 @@ public class OrderPaymentFacade {
             FindOrderResDto orderDto = orderService.findOrder(buyerId, orderId);
 
             // 트랜잭션 내의 비즈니스 로직 수행
-            return payProcess(buyerId, orderDto);
+            payTransactionSagaManager.payProcess(buyerId, orderId);
 
         } catch (InterruptedException e) {
             throw new RedisCustomException(RedisEnums.Error.LOCK_INTERRUPTED_ERROR);
@@ -155,20 +159,14 @@ public class OrderPaymentFacade {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Long payProcess(Long buyerId, FindOrderResDto orderDto){
+    public void payProcess(Long buyerId, FindOrderResDto orderDto){
         // 잔액 사용처리 (잔액 valid, 잔액 사용처리)
-        pointService.usePoint(buyerId, orderDto.totalPrice());
+//        pointService.usePoint(buyerId, orderDto.totalPrice());
         // 결제 처리 -> orderPaymentId 반환
         Payment payment = orderPaymentService.pay(buyerId, orderDto.orderId());
 
-        // 주문 데이터 수집 외부 데이터 플랫폼 전달
-        sendOrderToCollection(new SendOrderToCollectionDto(orderDto.orderNumber(), orderDto.totalPrice(), orderDto.createDatetime()));
-
-        return payment.getPaymentId();
+        // 주문결제 완료 이벤트 발행 (잔액 사용처리, 주문데이터 외부 플랫폼 전달)
+        orderEventPublish.orderPaymentComplete(new OrderPaymentCompleteEvent(buyerId, payment));
     }
 
-    // 주문 데이터 수집 외부 데이터 플랫폼 전달
-    private void sendOrderToCollection(SendOrderToCollectionDto sendDto){
-        orderCollectApiClient.sendOrderToCollectionPlatform(sendDto);
-    }
 }

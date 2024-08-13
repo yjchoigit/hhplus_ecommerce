@@ -6,6 +6,7 @@ import com.hhplus.ecommerce.domain.order.entity.OrderItem;
 import com.hhplus.ecommerce.domain.payment.entity.Payment;
 import com.hhplus.ecommerce.domain.order.exception.OrderCustomException;
 import com.hhplus.ecommerce.domain.order.repository.OrderItemRepository;
+import com.hhplus.ecommerce.domain.payment.event.PaymentEventPublish;
 import com.hhplus.ecommerce.domain.payment.repository.PaymentRepository;
 import com.hhplus.ecommerce.domain.order.repository.OrderRepository;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class PaymentServiceImpl implements PaymentService {
     private OrderRepository orderRepository;
     private OrderItemRepository orderItemRepository;
     private PaymentRepository paymentRepository;
+    private PaymentEventPublish paymentEventPublish;
 
     @Override
     @Transactional(rollbackFor = {Exception.class})
@@ -57,4 +59,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         return payment;
     }
+
+    @Override
+    @Transactional(rollbackFor = {Exception.class})
+    public void revertPay(Long orderId) {
+        // 주문 결제 조회
+        Payment payment = paymentRepository.findByOrderId(orderId);
+        // 결제완료상태 -> 결제대기상태로 업데이트 처리
+        payment.paymentWait();
+    }
+
 }
