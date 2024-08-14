@@ -1,5 +1,12 @@
 package com.hhplus.ecommerce.base.config.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hhplus.ecommerce.domain.order.event.dto.OrderPaymentCompleteForKafkaEvent;
+import com.hhplus.ecommerce.domain.outbox.OutboxEnums;
+import com.hhplus.ecommerce.domain.outbox.entity.Outbox;
+import com.hhplus.ecommerce.domain.payment.entity.Payment;
+import com.hhplus.ecommerce.service.outbox.OutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -12,12 +19,30 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @RequiredArgsConstructor
 public class KafkaProducer {
-    private static final String TOPIC = "sample_topic_1";
+    private static final String TOPIC = "order_events_topic";
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final OutboxService outboxService;
 
-    public void sendMessage(String message) {
-        log.info("Produce message : {}", message);
-        this.kafkaTemplate.send(TOPIC, message);
+    public void sendMessage(Long buyerId, Payment payment) {
+        // Outbox 이벤트 저장
+        Outbox outbox = Outbox.builder()
+                .aggregateType("Payment")
+                .aggregateId(payment.getPaymentId())
+                .eventType("orderPaymentComplete")
+                .payload(serializeEvent(OrderPaymentCompleteForKafkaEvent.toPayload(buyerId, payment)))
+                .status(OutboxEnums.Status.INIT)
+                .build();
+        outboxService.addOutbox(outbox);
+    }
+
+    // 이벤트를 JSON으로 직렬화
+    private String serializeEvent(OrderPaymentCompleteForKafkaEvent event) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(event);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize event", e);
+        }
     }
 
     public void sendMessageCallback(String message) {
