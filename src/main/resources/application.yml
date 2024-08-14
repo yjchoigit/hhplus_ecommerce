@@ -20,7 +20,7 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: kafka-group-1
+      group-id: order-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -40,6 +40,9 @@ logging:
         transaction: info  # 트랜잭션 관련 로그 레벨을 info로 설정
         data: info  # 데이터 관련 로그 레벨을 info로 설정
       hibernate: info  # Hibernate 관련 로그 레벨을 info로 설정
+      apache:
+        kafka:
+          clients: info # Kafka 클라이언트 로그 레벨 (디버그 모드)
     com:
       zaxxer:
         hikari: info  # HikariCP 관련 로그 레벨을 info로 설정
