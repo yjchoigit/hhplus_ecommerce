@@ -162,6 +162,7 @@ class PaymentFacadeConcurrencyTest {
                     1000, 10, OrderEnums.Status.WAIT));
         }
         Order order = orderFixture.add_order_wait(orderSheet.getOrderSheetId(), buyer, 10);
+        orderFixture.add_payment_wait(order);
 
         // CountDownLatch
         CountDownLatch latch = new CountDownLatch(10);
