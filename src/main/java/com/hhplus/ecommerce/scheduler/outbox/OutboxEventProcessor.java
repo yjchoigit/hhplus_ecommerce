@@ -27,7 +27,7 @@ public class OutboxEventProcessor {
 
         for (Outbox outbox : outboxList) {
             if(outbox.getCreateDatetime().isBefore(now.minusMinutes(10))
-                || outbox.getModifyDatetime().isBefore(now.minusMinutes(10))) {
+                || (outbox.getModifyDatetime() != null && outbox.getModifyDatetime().isBefore(now.minusMinutes(10)))) {
 
                 log.info("Retry Publish OutboxEvent:{}, with ID: {}", outbox.getEventType(), outbox.getOutboxId());
                 kafkaTemplate.send(KafkaConstants.ORDER_PAYMENT_COMPLETE_TOPIC, String.valueOf(outbox.getOutboxId()));
