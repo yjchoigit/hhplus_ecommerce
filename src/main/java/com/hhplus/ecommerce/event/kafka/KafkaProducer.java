@@ -1,4 +1,4 @@
-package com.hhplus.ecommerce.base.config.kafka;
+package com.hhplus.ecommerce.event.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,28 +11,29 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
 
-@Service
+@Component
 @Slf4j
 @RequiredArgsConstructor
 public class KafkaProducer {
-    private static final String TOPIC = "order_events_topic";
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final OutboxService outboxService;
 
-    public void sendMessage(Long buyerId, Payment payment) {
+    public void sendOrderPaymentCompleteEvent(Long buyerId, Payment payment) {
         // Outbox 이벤트 저장
         Outbox outbox = Outbox.builder()
-                .aggregateType("Payment")
-                .aggregateId(payment.getPaymentId())
-                .eventType("orderPaymentComplete")
+                .relationId(payment.getOrder().getOrderId())
+                .eventType(OutboxEnums.EventType.ORDER_PAYMENT_COMPLETE)
                 .payload(serializeEvent(OrderPaymentCompleteForKafkaEvent.toPayload(buyerId, payment)))
                 .status(OutboxEnums.Status.INIT)
                 .build();
         outboxService.addOutbox(outbox);
+
+        kafkaTemplate.send(KafkaConstants.ORDER_PAYMENT_COMPLETE_TOPIC, String.valueOf(outbox.getOutboxId()));
     }
 
     // 이벤트를 JSON으로 직렬화
@@ -43,16 +44,5 @@ public class KafkaProducer {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize event", e);
         }
-    }
-
-    public void sendMessageCallback(String message) {
-        CompletableFuture<SendResult<String, String>> future = this.kafkaTemplate.send(TOPIC, message);
-        future.whenComplete((result, ex) -> {
-           if (ex == null) {
-               log.info("Send message callback success");
-           } else {
-                log.error("Send message callback error", ex);
-           }
-        });
     }
 }

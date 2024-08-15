@@ -23,7 +23,6 @@ public class PaymentServiceImpl implements PaymentService {
     private OrderRepository orderRepository;
     private OrderItemRepository orderItemRepository;
     private PaymentRepository paymentRepository;
-    private PaymentEventPublish paymentEventPublish;
 
     @Override
     @Transactional(rollbackFor = {Exception.class})
@@ -68,5 +67,6 @@ public class PaymentServiceImpl implements PaymentService {
         // 결제완료상태 -> 결제대기상태로 업데이트 처리
         payment.paymentWait();
     }
+
 
 }

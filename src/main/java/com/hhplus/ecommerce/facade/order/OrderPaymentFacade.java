@@ -1,6 +1,6 @@
 package com.hhplus.ecommerce.facade.order;
 
-import com.hhplus.ecommerce.base.config.kafka.KafkaProducer;
+import com.hhplus.ecommerce.event.kafka.KafkaProducer;
 import com.hhplus.ecommerce.base.config.redis.RedisCustomException;
 import com.hhplus.ecommerce.base.config.redis.RedisEnums;
 import com.hhplus.ecommerce.controller.order.dto.CreateOrderApiReqDto;
@@ -202,7 +202,7 @@ public class OrderPaymentFacade {
         Payment payment = orderPaymentService.pay(buyerId, orderDto.orderId());
 
         // Outbox 이벤트 저장 및 카프카 발행
-        kafkaProducer.sendMessage(buyerId, payment);
+        kafkaProducer.sendOrderPaymentCompleteEvent(buyerId, payment);
     }
 
 }

@@ -1,6 +1,7 @@
-package com.hhplus.ecommerce.base.config.kafka;
+package com.hhplus.ecommerce.scheduler.outbox;
 
 import com.hhplus.ecommerce.domain.outbox.entity.Outbox;
+import com.hhplus.ecommerce.event.kafka.KafkaConstants;
 import com.hhplus.ecommerce.service.outbox.OutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,19 +21,16 @@ public class OutboxEventProcessor {
 
     @Transactional
     public void processOutboxEvents(){
+        LocalDateTime now = LocalDateTime.now();
+
         List<Outbox> outboxList = outboxService.findByInitStatus();
 
         for (Outbox outbox : outboxList) {
-            try {
-                // 상태 업데이트 (예: PUBLISHED로 변경) 및 로깅
-                outbox.markAsPublished();
-                outboxService.updateOutbox(outbox);
-                log.info("Processed OutboxEvent with ID: {}", outbox.getOutboxId());
+            if(outbox.getCreateDatetime().isBefore(now.minusMinutes(10))
+                || outbox.getModifyDatetime().isBefore(now.minusMinutes(10))) {
 
-                kafkaTemplate.send("order_payment_complete_topic", String.valueOf(outbox.getOutboxId()));
-
-            } catch (Exception e) {
-                log.error("Failed to process OutboxEvent with ID: {}", outbox.getOutboxId(), e);
+                log.info("Retry Publish OutboxEvent:{}, with ID: {}", outbox.getEventType(), outbox.getOutboxId());
+                kafkaTemplate.send(KafkaConstants.ORDER_PAYMENT_COMPLETE_TOPIC, String.valueOf(outbox.getOutboxId()));
             }
         }
     }

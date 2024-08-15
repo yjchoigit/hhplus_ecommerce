@@ -1,4 +1,4 @@
-package com.hhplus.ecommerce.base.config.kafka;
+package com.hhplus.ecommerce.scheduler.outbox;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;

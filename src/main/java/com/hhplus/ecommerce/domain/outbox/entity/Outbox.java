@@ -16,20 +16,22 @@ import org.hibernate.annotations.Comment;
 public class Outbox extends CreateModifyDateTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Comment("outbox id")
+    @Comment("아웃박스 Id")
     private Long outboxId;
-    private String aggregateType;
-    private Long aggregateId;
-    private String eventType;
+    @Comment("연관 Id")
+    private Long relationId;
+    @Enumerated(EnumType.STRING)
+    @Comment("이벤트 타입 Enum")
+    private OutboxEnums.EventType eventType;
+    @Comment("페이로드")
     private String payload;
     @Enumerated(EnumType.STRING)
     @Comment("상태 Enum")
     private OutboxEnums.Status status;
 
     @Builder
-    public Outbox(String aggregateType, Long aggregateId, String eventType, String payload, OutboxEnums.Status status) {
-        this.aggregateType = aggregateType;
-        this.aggregateId = aggregateId;
+    public Outbox(Long relationId, OutboxEnums.EventType eventType, String payload, OutboxEnums.Status status) {
+        this.relationId = relationId;
         this.eventType = eventType;
         this.payload = payload;
         this.status = status;
@@ -37,10 +39,6 @@ public class Outbox extends CreateModifyDateTimeEntity {
 
     public void markAsPublished(){
         this.status = OutboxEnums.Status.PUBLISHED;
-    }
-
-    public void markAsProcessed(){
-        this.status = OutboxEnums.Status.PROCESSED;
     }
 
 }

@@ -7,6 +7,12 @@ public class OutboxEnums {
     @Getter
     @RequiredArgsConstructor
     public enum Status {
-        INIT, PUBLISHED, PROCESSED
+        INIT, PUBLISHED
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public enum EventType {
+        ORDER_PAYMENT_COMPLETE
     }
 }
