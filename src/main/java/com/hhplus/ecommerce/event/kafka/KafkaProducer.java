@@ -33,7 +33,12 @@ public class KafkaProducer {
                 .build();
         outboxService.addOutbox(outbox);
 
-        kafkaTemplate.send(KafkaConstants.ORDER_PAYMENT_COMPLETE_TOPIC, String.valueOf(outbox.getOutboxId()));
+        // 카프카 발행
+        send(KafkaConstants.ORDER_PAYMENT_COMPLETE_TOPIC, String.valueOf(outbox.getOutboxId()));
+    }
+
+    public void send(String topic, String outboxId){
+        kafkaTemplate.send(topic, outboxId);
     }
 
     // 이벤트를 JSON으로 직렬화

@@ -37,7 +37,7 @@ public class KafkaConsumer {
             // 외부 API로 데이터 전송 로직
             orderEventPublish.orderPaymentCompleteForKafka(event);
 
-            log.info("Processed OutboxEvent : {}, with ID: {}", outbox.getEventType(), outboxId);
+            log.info("Succeed OutboxEvent : {}, with ID: {}", outbox.getEventType(), outboxId);
         } catch (Exception e) {
             log.error("Failed to process message: {}", message, e);
         }
