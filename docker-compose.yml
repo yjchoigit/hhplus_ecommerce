@@ -56,5 +56,44 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  grafana_container:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana-provisioning:/etc/grafana/provisioning
+      - ./grafana-dashboard:/dashboard
+    environment: # 이 설정을 통해 로그인하지 않고 grafana 접속 가능
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin # 사용자에게 Adimin 역할 부여
+      - GF_AUTH_ANONYMOUS_ENABLED=true # 익명 접근 활성화
+      - GF_AUTH_BASIC_ENABLED=false # 기본 인증 비활성화
+    depends_on:
+      - prometheus_container
+
+  prometheus_container:
+    container_name: prometheus
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    command:
+      - --web.enable-remote-write-receiver
+      - --enable-feature=native-histograms
+      - --config.file=/etc/prometheus/prometheus.yml
+
+  k6_container:
+    container_name: k6
+    image: grafana/k6
+    volumes:
+      - ./k6-scripts:/scripts
+    command: run -o experimental-prometheus-rw /scripts/stress.js
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - prometheus_container
+
 volumes:
   mysql_data:
