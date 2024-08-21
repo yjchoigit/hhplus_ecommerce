@@ -81,6 +81,34 @@ services:
       - --enable-feature=native-histograms
       - --config.file=/etc/prometheus/prometheus.yml
 
+  k6_product_test:
+    container_name: k6_product_test
+    image: grafana/k6
+    volumes:
+      - ./k6-scripts:/scripts
+    command: run -o experimental-prometheus-rw /scripts/product-stress.js
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - prometheus_container
+
+  k6_points_test:
+    container_name: k6_points_test
+    image: grafana/k6
+    volumes:
+      - ./k6-scripts:/scripts
+    command: run -o experimental-prometheus-rw /scripts/point-stress.js
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - prometheus_container
+
   k6_container:
     container_name: k6
     image: grafana/k6
