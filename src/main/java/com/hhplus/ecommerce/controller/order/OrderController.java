@@ -55,6 +55,14 @@ public class OrderController {
         return ResponseUtil.success();
     }
 
+    @Operation(summary = "주문 결제 진행 - kafka 적용")
+    @ApiResponse(responseCode = "200", description = "성공", content = @Content(mediaType = "application/json", schema = @Schema(implementation = Long.class)))
+    @PostMapping(value = "/orders/payment/kafka")
+    public ResponseDto<Void> paymentOrderForKafka(@RequestBody @Valid PaymentOrderApiReqDto reqDto){
+        orderPaymentFacade.payForKafka(reqDto.buyerId(), reqDto.orderId());
+        return ResponseUtil.success();
+    }
+
     @Operation(summary = "주문 조회")
     @ApiResponse(responseCode = "200", description = "성공", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FindOrderApiResDto.class)))
     @GetMapping(value = "/orders/{buyerId}")

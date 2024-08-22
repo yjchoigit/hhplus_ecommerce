@@ -1,6 +1,7 @@
 package com.hhplus.ecommerce.domain.order.event;
 
 import com.hhplus.ecommerce.domain.order.event.dto.OrderPaymentCompleteEvent;
+import com.hhplus.ecommerce.domain.order.event.dto.OrderPaymentCompleteForKafkaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,4 +18,10 @@ public class OrderEventPublish {
     public void orderPaymentComplete(OrderPaymentCompleteEvent event){
         eventPublisher.publishEvent(event);
     }
+
+    @Transactional
+    public void orderPaymentCompleteForKafka(OrderPaymentCompleteForKafkaEvent event){
+        eventPublisher.publishEvent(event);
+    }
+
 }

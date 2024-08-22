@@ -44,9 +44,11 @@ public class OrderFixture {
                     1000, number, OrderEnums.Status.WAIT));
         }
 
-        paymentRepository.save(new Payment(order, order.getTotalPrice(), OrderEnums.PaymentStatus.WAIT));
-
         return order;
+    }
+
+    public Payment add_payment_wait(Order order){
+        return paymentRepository.save(new Payment(order, order.getTotalPrice(), OrderEnums.PaymentStatus.WAIT));
     }
 
     public Order add_order_pay_complete(Long orderSheetId, Buyer buyer, int number){

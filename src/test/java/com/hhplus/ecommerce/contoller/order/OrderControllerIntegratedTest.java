@@ -211,6 +211,7 @@ class OrderControllerIntegratedTest extends Setting {
         }
 
         Order order = orderFixture.add_order_wait(orderSheet.getOrderSheetId(), buyer, 10);
+        orderFixture.add_payment_wait(order);
 
         PaymentOrderApiReqDto reqDto = new PaymentOrderApiReqDto(buyer.getBuyerId(), order.getOrderId());
 
@@ -360,6 +361,7 @@ class OrderControllerIntegratedTest extends Setting {
         }
 
         Order order = orderFixture.add_order_wait(orderSheet.getOrderSheetId(), buyer, 10);
+        orderFixture.add_payment_wait(order);
 
         PaymentOrderApiReqDto reqDto = new PaymentOrderApiReqDto(buyer.getBuyerId(), order.getOrderId());
 

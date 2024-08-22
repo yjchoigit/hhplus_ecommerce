@@ -2,6 +2,7 @@ package com.hhplus.ecommerce.domain.order.event;
 
 import com.hhplus.ecommerce.domain.order.entity.Order;
 import com.hhplus.ecommerce.domain.order.event.dto.OrderPaymentCompleteEvent;
+import com.hhplus.ecommerce.domain.order.event.dto.OrderPaymentCompleteForKafkaEvent;
 import com.hhplus.ecommerce.domain.payment.entity.Payment;
 import com.hhplus.ecommerce.infrastructure.apiClient.order.OrderCollectApiClient;
 import com.hhplus.ecommerce.infrastructure.apiClient.order.dto.SendOrderToCollectionDto;
@@ -31,11 +32,30 @@ public class OrderEventListener {
                     .buyerName(order.getBuyerName())
                     .paymentPrice(payment.getPaymentPrice())
                     .paymentId(payment.getPaymentId())
-                    .paymentCreateDatetime(payment.getCreateDatetime())
+                    .paymentCreateDatetime(payment.getCreateDatetime().toString())
                     .build());
         } catch (Exception e) {
             log.error("주문 데이터 수집 >> 외부 데이터 플랫폼 전달 실패 : {}", e.getMessage());
         }
     }
+
+    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void sentOrderPaymentInfoForKafka(OrderPaymentCompleteForKafkaEvent event){
+        try {
+            log.info("주문 데이터 수집 >> 외부 데이터 플랫폼 전달 실행");
+            orderCollectApiClient.sendOrderToCollectionPlatform(SendOrderToCollectionDto.builder()
+                    .orderNumber(event.orderNumber())
+                    .buyerName(event.buyerName())
+                    .orderCreateDatetime(event.orderCreateDatetime())
+                    .paymentPrice(event.paymentPrice())
+                    .paymentId(event.paymentId())
+                    .paymentCreateDatetime(event.paymentCreateDatetime())
+                    .build());
+        } catch (Exception e) {
+            log.error("주문 데이터 수집 >> 외부 데이터 플랫폼 전달 실패 : {}", e.getMessage());
+        }
+    }
+
 
 }
