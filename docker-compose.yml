@@ -1,11 +1,13 @@
 version: "3.1"
 
 services:
+  # docker-compose run k6 /scripts/{테스트-스크립트}.js
   k6:
     image: loadimpact/k6
     volumes:
-      - ./test.js:/scripts/test.js
-    entrypoint: [ "k6", "run", "/scripts/test.js" ]
+      - ./:/scripts
+    entrypoint: [ "k6", "run" ]
+    network_mode: "host"
 
   redis_container:
     container_name: redis

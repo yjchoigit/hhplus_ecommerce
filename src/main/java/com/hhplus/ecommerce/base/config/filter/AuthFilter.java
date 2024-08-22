@@ -36,7 +36,7 @@ public class AuthFilter implements Filter {
         String path = httpRequest.getRequestURI();
 
         // 특정 경로 제외하기
-        if (path.startsWith("/points") || path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/h2-console")) {
+        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/h2-console")) {
             log.info("Skipping AuthFilter for: " + path);
             chain.doFilter(request, response);
             return;
