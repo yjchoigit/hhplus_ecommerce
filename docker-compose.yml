@@ -1,6 +1,12 @@
 version: "3.1"
 
 services:
+  k6:
+    image: loadimpact/k6
+    volumes:
+      - ./test.js:/scripts/test.js
+    entrypoint: [ "k6", "run", "/scripts/test.js" ]
+
   redis_container:
     container_name: redis
     image: redis:latest
