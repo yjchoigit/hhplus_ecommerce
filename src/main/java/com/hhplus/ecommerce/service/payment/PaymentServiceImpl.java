@@ -40,21 +40,24 @@ public class PaymentServiceImpl implements PaymentService {
         
         // 주문 결제 조회
         Payment payment = paymentRepository.findByOrderId(orderId);
-
-        // 결제 상태 확인 -> 결제완료, exception
-        if(OrderEnums.PaymentStatus.WAIT.equals(payment.getStatus())){
-            // 결제 대기 상태인 경우 -> 결제 완료로 전환
-            payment.paymentComplete();
-            // 주문 품목 상태 -> 입금 완료로 전환
-            orderItemList.forEach(OrderItem::depositComplete);
-        } else if (OrderEnums.PaymentStatus.PAY_COMPLETE.equals(payment.getStatus())){
-            // 결제 완료 상태인 경우 -> 이미 결제가 완료된 주문
-            throw new OrderCustomException(OrderEnums.Error.ALREADY_PAY_COMPLETE_ORDER);
-        } else if (OrderEnums.PaymentStatus.REFUND.equals(payment.getStatus())){
-            // 결제 환불 상태인 경우 -> 이미 결제가 환불된 주문
-            throw new OrderCustomException(OrderEnums.Error.ALREADY_REFUND_ORDER);
+        if(payment == null) {
+            throw new OrderCustomException(OrderEnums.Error.NO_ORDER);
         }
 
+        // 결제 상태 확인 -> 결제완료, exception
+        switch (payment.getStatus()) {
+            case WAIT: // 결제 대기 상태인 경우 -> 결제 완료로 전환
+                payment.paymentComplete();
+                // 주문 품목 상태 -> 입금 완료로 전환
+                orderItemList.forEach(OrderItem::depositComplete);
+                break;
+            case PAY_COMPLETE: // 결제 완료 상태인 경우 -> 이미 결제가 완료된 주문
+                throw new OrderCustomException(OrderEnums.Error.ALREADY_PAY_COMPLETE_ORDER);
+            case REFUND: // 결제 환불 상태인 경우 -> 이미 결제가 환불된 주문
+                throw new OrderCustomException(OrderEnums.Error.ALREADY_REFUND_ORDER);
+            default:
+                throw new OrderCustomException(OrderEnums.Error.NO_ORDER);
+        }
 
         return payment;
     }
