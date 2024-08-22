@@ -1,5 +1,12 @@
 부하테스트
 ===========================
+목차
+----
+1. [테스트하기 전의 생각](#테스트하기-전의-생각)
+2. [잔액 시나리오](#잔액-시나리오)
+3. [주문 결제 시나리오](#주문-결제-시나리오)
+4. [장애 분석 및 기능 개선](#장애-분석-및-기능-개선)
+5. [느낀 점](#느낀-점)
 *****
 테스트하기 전의 생각
 -----
@@ -410,6 +417,112 @@
     - 개선사항
       - 일부 요청의 최대 응답 시간이 높음 => 캐싱 전략, db 쿼리 최적화 고려하기
       - 리소스 모니터링 : 실제 운영환경 내 CPU, 메모리 사용량 모니터링 => 리소스 병목 현상, 성능 저하 예방
+*****
+장애 분석 및 기능 개선
+-----
+- **문제 분석**
+  - **잔액 시나리오**
+    - 문제 : 응답 시간이 기대보다 길어질 때가 있음
+    - 원인 : DB쿼리 최적화 부족, 서버 자원 부족
+  - **주문 결제 시나리오**
+    - 문제 : 응답 시간이 기대보다 길어질 때가 있음
+    - 원인 : DB쿼리 최적화 부족, 서버 자원 부족
+  - 두 시나리오 테스트 시 최대 응답 시간이 갑자기 길어질 때가 있다.
+- **기능 개선**
+  - **잔액 시나리오**
+      - 개선 작업
+        - db 쿼리 최적화
+        ```mysql
+            -- 인덱스 사용   
+            CREATE INDEX idx_buyer_id ON point(buyer_id);
+            -- 실행 분석
+            set profiling=1;
+            SET PROFILING_HISTORY_SIZE=30;
+            SELECT * FROM point where buyer_id = #{buyer_id};
+        ``` 
+        - point(잔액) 테이블에 idx_buyer_id 인덱스 추가 적용
+          - 적용 전 duration : 0.00177초
+          - 적용 후 duration : 0.0003855초
+      - 개선 후 벤치마크
+        - 이전
+          - HTTP 요청 처리량(http_reqs)
+            - 총 요청 수 : 20384
+            - 처리 속도: 약 337.31 요청/초
+        - 이후
+          - HTTP 요청 처리량(http_reqs)
+            - 총 요청 수 : 147
+            - 처리 속도: 약 1.66 요청/초
+    - **주문 결제 시나리오**
+      - 개선 작업
+        - db 쿼리 최적화
+        ```mysql
+            -- 인덱스 사용   
+            CREATE INDEX idx_buyer_id ON point(buyer_id);
+            -- 실행 분석
+            set profiling=1;
+            SET PROFILING_HISTORY_SIZE=30;
+            SELECT * FROM point where buyer_id = #{buyer_id};
+        ``` 
+        - point(잔액) 테이블에 idx_buyer_id 인덱스 추가 적용
+          - 적용 전 duration : 0.00177초
+          - 적용 후 duration : 0.0003855초
+        - CPU 바운드 작업 : 스레드풀 크기 설정, 스레드풀 크기를 코어 수의 2배 이상으로 설정
+        ```java
+           private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
+           
+           // 결제 처리 로직
+           public void payForKafka(){
+             ....
+             // 이전에는 바로 payProcess()를 부름
+             // payProcess(buyerId, orderDto); 
+        
+             // 비동기로 결제 처리 및 카프카 발행
+            executorService.submit(() -> {
+                try {
+                    payProcess(buyerId, orderDto);
+                } catch (Exception e) {
+                    log.error("Payment processing failed", e);
+                }
+            });
+            }
+        
+           @Transactional(rollbackFor = Exception.class)
+           public void payProcess(Long buyerId, FindOrderResDto orderDto){
+           // 잔액 사용처리 (잔액 valid, 잔액 사용처리)
+           pointService.usePoint(buyerId, orderDto.totalPrice());
+           // 결제 처리 -> orderPaymentId 반환
+           Payment payment = orderPaymentService.pay(buyerId, orderDto.orderId());
+
+            // Outbox 이벤트 저장 및 카프카 발행
+            kafkaProducer.sendOrderPaymentCompleteEvent(buyerId, payment);
+           }
+        ``` 
+      - 개선 후 벤치마크
+        - 이전
+          - HTTP 요청 처리량(http_reqs)
+            - 총 요청 수 : 2811
+            - 처리 속도: 약 45.81 요청/초
+          - HTTP 요청 대기 시간 (http_req_waiting)
+            - 평균: 66.11ms
+            - 처리 속도: 약 49.25 요청/초
+        - 이후
+          - HTTP 요청 처리량(http_reqs)
+            - 총 요청 수 : 3005
+            - 처리 속도: 약 49.25 요청/초
+          - HTTP 요청 대기 시간 (http_req_waiting)
+            - 평균: 13.71ms
+- **장애 대응**
+  - **장애 원인**
+    - 서버 자원 부족
+    - 비효율적 데이터 처리
+  - **대응 조치**
+    - 로직 리팩토링
+    - 서버 자원 확장
+    - 카프카 성능 설정
+    - 데이터베이스 성능 개선
+- **추후 계획**
+  - 추가 요구사항 및 개선사항 회의
+  - 지속적인 모니터링 필요
 *****
 느낀 점
 -----
