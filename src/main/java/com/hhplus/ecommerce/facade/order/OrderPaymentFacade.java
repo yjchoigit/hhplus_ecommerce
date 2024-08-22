@@ -21,6 +21,8 @@ import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -36,6 +38,7 @@ public class OrderPaymentFacade {
     private RedissonClient redissonClient;
     private PayTransactionSagaManager payTransactionSagaManager;
     private KafkaProducer kafkaProducer;
+    private final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
     // 주문 생성
     public Long createOrder(CreateOrderApiReqDto reqDto){
@@ -115,7 +118,6 @@ public class OrderPaymentFacade {
         }
     }
 
-
     // 결제 처리
     public void pay(Long buyerId, Long orderId) {
         // 주문 id 기준으로 Lock 객체를 가져옴
@@ -174,9 +176,14 @@ public class OrderPaymentFacade {
             // 주문 정보 조회
             FindOrderResDto orderDto = orderService.findOrder(buyerId, orderId);
 
-            // 트랜잭션 내의 비즈니스 로직 수행
-            payProcess(buyerId, orderDto);
-
+            // 비동기로 결제 처리 및 카프카 발행
+            executorService.submit(() -> {
+                try {
+                    payProcess(buyerId, orderDto);
+                } catch (Exception e) {
+                    log.error("Payment processing failed", e);
+                }
+            });
         } catch (InterruptedException e) {
             throw new RedisCustomException(RedisEnums.Error.LOCK_INTERRUPTED_ERROR);
         } finally {
