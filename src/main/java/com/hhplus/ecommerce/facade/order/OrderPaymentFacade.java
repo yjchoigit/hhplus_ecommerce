@@ -85,7 +85,7 @@ public class OrderPaymentFacade {
         FindOrderResDto orderDto = orderService.findOrder(reqDto.buyerId(), order.getOrderId());
 
         // 주문서 삭제 처리
-        orderSheetService.delOrderSheet(reqDto.orderSheetId());
+//        orderSheetService.delOrderSheet(reqDto.orderSheetId());
 
         return orderDto.orderId();
     }
@@ -199,10 +199,10 @@ public class OrderPaymentFacade {
         // 잔액 사용처리 (잔액 valid, 잔액 사용처리)
         pointService.usePoint(buyerId, orderDto.totalPrice());
         // 결제 처리 -> orderPaymentId 반환
-        Payment payment = orderPaymentService.pay(buyerId, orderDto.orderId());
-
-        // Outbox 이벤트 저장 및 카프카 발행
-        kafkaProducer.sendOrderPaymentCompleteEvent(buyerId, payment);
+//        Payment payment = orderPaymentService.pay(buyerId, orderDto.orderId());
+//
+//        // Outbox 이벤트 저장 및 카프카 발행
+//        kafkaProducer.sendOrderPaymentCompleteEvent(buyerId, payment);
     }
 
 }

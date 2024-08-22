@@ -28,7 +28,8 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional(rollbackFor = {Exception.class})
     public Payment pay(Long buyerId, Long orderId) {
         // 주문 조회
-        Order order = orderRepository.findByBuyerIdAndOrderId(buyerId, orderId);
+//        Order order = orderRepository.findByBuyerIdAndOrderId(buyerId, orderId);
+        Order order = orderRepository.findByOrderId(orderId);
         if(order == null) {
             throw new OrderCustomException(OrderEnums.Error.NO_ORDER);
         }

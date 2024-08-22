@@ -59,9 +59,14 @@ public class PointServiceImpl implements PointService {
 
             // 회원 id로 잔액 정보 조회
             Point pointInfo = pointRepository.findByBuyerId(buyerId)
-                    .orElseThrow(() -> new PointCustomException(PointEnums.Error.NO_POINT));
-            // 잔액 충전
-            pointInfo.charge(point);
+                    .orElse(null);
+
+            if(pointInfo == null){
+                pointInfo = pointRepository.save(new Point(buyerId, point));
+            } else {
+                // 잔액 충전
+                pointInfo.charge(point);
+            }
             // 잔액 충전 내역 저장
             pointHistoryRepository.save(new PointHistory(pointInfo, PointEnums.Type.CHARGE, point));
             return pointInfo;

@@ -13,7 +13,7 @@ public class OutboxEventScheduler {
         this.outboxEventProcessor = outboxEventProcessor;
     }
 
-    @Scheduled(fixedRate = 10000)
+//    @Scheduled(fixedRate = 10000)
     public void processOutboxEvents() {
         outboxEventProcessor.processOutboxEvents();
     }

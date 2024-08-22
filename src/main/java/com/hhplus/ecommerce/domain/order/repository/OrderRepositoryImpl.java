@@ -20,4 +20,9 @@ public class OrderRepositoryImpl implements OrderRepository {
     public Order findByBuyerIdAndOrderId(Long buyerId, Long orderId) {
         return orderJpaRepository.findByBuyerIdAndOrderId(buyerId, orderId);
     }
+
+    @Override
+    public Order findByOrderId(Long orderId) {
+        return orderJpaRepository.findByOrderId(orderId);
+    }
 }
